@@ -1,9 +1,9 @@
 # WW.Cad_Net6.0_Examples
 
-CadLib 6.0 (multi-platorm) is the multi-platform version of CadLib. 
+[CadLib 6.0 (multi-platorm)](https://www.woutware.com/net/cad/netcore/6.0) is the multi-platform version of CadLib. 
 For the .NET version of CadLib for Windows only, please visit https://www.woutware.com/net/cad, and download the trial version, which contains Win Forms, WPF and Open GL viewer examples.
 
-Contains basic read, write and export samples for the trial version of [CadLib 6.0 (multi-platorm) library](https://www.woutware.com/net/cad/netcore/6.0). 
+This repository contains basic read, write and export samples for the trial version of [CadLib 6.0 (multi-platorm) library](https://www.woutware.com/net/cad/netcore/6.0). 
 
 For these applications to work you will need a trial license.
 The MyAppKeyPair.snk linked in the projects are not present in the repository, 
