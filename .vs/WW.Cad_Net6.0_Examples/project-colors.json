@@ -1,0 +1,46 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "1efcba20-7cb2-4695-a6e0-9a0b3acc8175": {
+      "ProjectGuid": "1efcba20-7cb2-4695-a6e0-9a0b3acc8175",
+      "DisplayName": "ReadExample",
+      "ColorIndex": 0
+    },
+    "61d0142c-b3d7-493a-8d3b-1009c12a121b": {
+      "ProjectGuid": "61d0142c-b3d7-493a-8d3b-1009c12a121b",
+      "DisplayName": "ImageExportExample",
+      "ColorIndex": 1
+    },
+    "aede7ec1-90ac-4370-81a1-c36541a23beb": {
+      "ProjectGuid": "aede7ec1-90ac-4370-81a1-c36541a23beb",
+      "DisplayName": "PdfExportExample",
+      "ColorIndex": 2
+    },
+    "eb109dd3-6e2b-49cf-9211-c7f8b367fb4a": {
+      "ProjectGuid": "eb109dd3-6e2b-49cf-9211-c7f8b367fb4a",
+      "DisplayName": "WebApplication",
+      "ColorIndex": 3
+    },
+    "ee5d6dac-0bc1-4c09-87da-a8f68feed54a": {
+      "ProjectGuid": "ee5d6dac-0bc1-4c09-87da-a8f68feed54a",
+      "DisplayName": "WriteExample",
+      "ColorIndex": 4
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Miscellaneous Files",
+      "ColorIndex": -1
+    },
+    "df8fe030-918a-41ba-a798-bfd0ad98c180": {
+      "ProjectGuid": "df8fe030-918a-41ba-a798-bfd0ad98c180",
+      "DisplayName": "WebApplication",
+      "ColorIndex": 5
+    },
+    "5b1ca5be-6733-487f-a904-705cdbd4660c": {
+      "ProjectGuid": "5b1ca5be-6733-487f-a904-705cdbd4660c",
+      "DisplayName": "WebApplication",
+      "ColorIndex": 6
+    }
+  },
+  "NextColorIndex": 7
+}
