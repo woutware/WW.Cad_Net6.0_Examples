@@ -40,7 +40,12 @@
       "ProjectGuid": "5b1ca5be-6733-487f-a904-705cdbd4660c",
       "DisplayName": "WebApplication",
       "ColorIndex": 6
+    },
+    "12f8db69-da12-4f53-85cb-bc29910512ee": {
+      "ProjectGuid": "12f8db69-da12-4f53-85cb-bc29910512ee",
+      "DisplayName": "SvgExportExample",
+      "ColorIndex": 7
     }
   },
-  "NextColorIndex": 7
+  "NextColorIndex": 8
 }
