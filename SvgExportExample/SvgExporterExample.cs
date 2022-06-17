@@ -160,7 +160,7 @@ namespace SvgExportExample {
                 if (layout == null || !layout.PaperSpace) {
                     svgExporter.Draw(model, config, to2DTransform);
                 } else {
-                    svgExporter.Draw(model, layout, null, config, to2DTransform);
+                    svgExporter.Draw(model, layout, null, config, to2DTransform, scaleFactor);
                 }
             }
         }
