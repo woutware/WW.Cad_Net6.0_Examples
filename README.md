@@ -1,6 +1,9 @@
 # WW.Cad_Net6.0_Examples
 
-[CadLib 6.0 (multi-platorm)](https://www.woutware.com/net/cad/netcore/6.0) is the multi-platform version of CadLib. 
+[CadLib 6.0 (multi-platorm)](https://www.woutware.com/net/cad/netcore/6.0) is the multi-platform version of CadLib,
+a .NET library to read, write and display AutoCAD DWG and DXF files. 
+Example projects include converters to PDF, SVG and bitmaps.
+
 For the .NET version of CadLib for Windows only, please visit https://www.woutware.com/net/cad, and download the trial version, which contains Win Forms, WPF and Open GL viewer examples.
 
 This repository contains basic read, write and export samples for the trial version of [CadLib 6.0 (multi-platorm) library](https://www.woutware.com/net/cad/netcore/6.0). 
