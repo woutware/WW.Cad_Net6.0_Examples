@@ -1,5 +1,6 @@
 ﻿using System;
 
+using WW.Cad.Examples;
 using WW.Cad.IO;
 using WW.Cad.Model;
 using WW.Cad.Model.Entities;

@@ -7,6 +7,7 @@ using WW.Cad.Base;
 using WW.Cad.Drawing;
 using WW.Cad.IO;
 using WW.Cad.Model;
+using WW.Cad.Model.Entities;
 using WW.Cad.Model.Objects;
 using WW.Cad.Model.Tables;
 #if NETCOREAPP
@@ -15,46 +16,70 @@ using WW.Drawing.Printing;
 using WW.Math;
 using WW.Math.Geometry;
 
-namespace SvgExportExample {
+namespace WW.Cad.Examples {
     // This class demonstrates how to export an AutoCAD file to SVG (both model space and paper space layouts).
     public class SvgExporterExample {
         // Exports an AutoCAD file to SVG. For each layout a page in the SVG file is created.
-        public static void ExportToSvg(string filename) {
-            DxfModel model = CadReader.Read(filename);
-            ExportToSvg(model);
+        public static void ExportToSvg(string filename, SvgExportOptions options = null) {
+            DxfModel model = CadReader.Read(filename, true);
+            model.LoadExternalReferences();
+            ExportToSvg(model, options);
         }
 
         // Exports an AutoCAD file to SVG. For each layout a page in the SVG file is created.
-        public static void ExportToSvg(DxfModel model) {
+        public static void ExportToSvg(DxfModel model, SvgExportOptions options = null) {
+            if (options == null) {
+                options = SvgExportOptions.Default;
+            }
             string filename = Path.GetFileName(model.Filename);
             string dir = Path.GetDirectoryName(model.Filename);
             string filenameNoExt = Path.GetFileNameWithoutExtension(filename);
             // as SVG
-            using (FileStream stream = File.Create(Path.Combine(dir, filenameNoExt + ".svg"))) {
-                SvgExporter svgExporter = new SvgExporter(stream);
+            string outputFilename = GetOutputFilename(options, dir, filenameNoExt);
+            using (FileStream stream = File.Create(outputFilename)) {
+                WW.Cad.IO.SvgExporter svgExporter = new WW.Cad.IO.SvgExporter(stream);
 
-                GraphicsConfig config = (GraphicsConfig)GraphicsConfig.WhiteBackgroundCorrectForBackColor.Clone();
+                GraphicsConfig config = (GraphicsConfig)GraphicsConfig.AcadLikeWithWhiteBackground.Clone();
                 config.DisplayLineTypeElementShapes = true;
+                // Shows use of some options.
+                DxfLayout layout = model.Header.ShowModelSpace ? model.ModelLayout : model.ActiveLayout;
+                if (!string.IsNullOrEmpty(options.LayoutName)) {
+                    if (string.Compare("modelspace", options.LayoutName, StringComparison.InvariantCultureIgnoreCase) == 0) {
+                        layout = model.ModelLayout;
+                    } else {
+                        if (!model.Layouts.TryGetValue(options.LayoutName, out layout)) {
+                            throw new ArgumentException($"Layout with name {options.LayoutName} not found.");
+                        }
+                    }
+                } else if (options.LayoutIndex >= 0) {
+                    if (options.LayoutIndex >= model.Layouts.Count) {
+                        throw new ArgumentOutOfRangeException($"Index {options.LayoutIndex} must be between 0 and number of layouts {model.Layouts.Count} - 1.");
+                }
+                    layout = model.OrderedLayouts[options.LayoutIndex];
                 //config.TryDrawingTextAsText = true;
-
-                AddLayoutToSvgExporter(svgExporter, config, model, null, model.ModelLayout);
+                }
+                AddLayoutToSvgExporter(svgExporter, config, model, null, layout, options);
             }
         }
 
         // Exports the specified layout of an AutoCAD file to SVG.
-        public static void ExportToSvg(DxfModel model, DxfLayout layout) {
+        public static void ExportToSvg(DxfModel model, DxfLayout layout, SvgExportOptions options = null) {
+            if (options == null) {
+                options = SvgExportOptions.Default;
+            }
             string filename = Path.GetFileName(model.Filename);
             string dir = Path.GetDirectoryName(model.Filename);
             string filenameNoExt = Path.GetFileNameWithoutExtension(filename);
             // as SVG
-            using (FileStream stream = File.Create(Path.Combine(dir, filenameNoExt + "-" + layout.Name + ".svg"))) {
-                SvgExporter svgExporter = new SvgExporter(stream);
+            string outputFilename = GetOutputFilename(options, dir, filenameNoExt);
+            using (FileStream stream = File.Create(outputFilename)) {
+                WW.Cad.IO.SvgExporter svgExporter = new WW.Cad.IO.SvgExporter(stream);
 
-                GraphicsConfig config = (GraphicsConfig)GraphicsConfig.WhiteBackgroundCorrectForBackColor.Clone();
+                GraphicsConfig config = (GraphicsConfig)GraphicsConfig.AcadLikeWithWhiteBackground.Clone();
                 config.DisplayLineTypeElementShapes = true;
                 //config.TryDrawingTextAsText = true;
 
-                AddLayoutToSvgExporter(svgExporter, config, model, null, layout);
+                AddLayoutToSvgExporter(svgExporter, config, model, null, layout, options);
             }
         }
 
@@ -62,8 +87,11 @@ namespace SvgExportExample {
         // Optionally specify a modelView (for model space only).
         // Optionally specify a layout.
         private static void AddLayoutToSvgExporter(
-            SvgExporter svgExporter, GraphicsConfig config, DxfModel model, DxfView modelView, DxfLayout layout
+            WW.Cad.IO.SvgExporter svgExporter, GraphicsConfig config, DxfModel model, DxfView modelView, DxfLayout layout, SvgExportOptions options = null
         ) {
+            if (options == null) {
+                options = SvgExportOptions.Default;
+            }
             Bounds3D bounds;
             const float defaultMargin = 0.5f;
             float margin = 0f;
@@ -76,11 +104,7 @@ namespace SvgExportExample {
                 boundsCalculator.GetBounds(model);
                 bounds = boundsCalculator.Bounds;
                 if (bounds.Initialized) {
-                    if (bounds.Delta.X > bounds.Delta.Y) {
-                        paperSize = PaperSizes.GetPaperSize(PaperKind.A4Rotated);
-                    } else {
-                        paperSize = PaperSizes.GetPaperSize(PaperKind.A4);
-                    }
+                    paperSize = GetPaperSize(bounds, options.ModelSpacePaperKind, options.ModelSpaceOrientation);
                 } else {
                     emptyLayout = true;
                 }
@@ -88,12 +112,16 @@ namespace SvgExportExample {
                 useModelView = modelView != null;
             } else {
                 // Paper space layout.
-                Bounds2D plotAreaBounds = layout.GetPlotAreaBounds();
+                Bounds2D plotAreaBounds = layout.GetPlotAreaBounds(options.GetPlotArea);
                 bounds = new Bounds3D();
                 emptyLayout = !plotAreaBounds.Initialized;
                 if (plotAreaBounds.Initialized) {
                     double customScaleFactor = 1d;
-                    if ((layout.PlotLayoutFlags & PlotLayoutFlags.UseStandardScale) == 0 && (layout.CustomPrintScaleNumerator != 0d && layout.CustomPrintScaleDenominator != 0d)) {
+                    if (
+                        (layout.PlotLayoutFlags & PlotLayoutFlags.UseStandardScale) == 0 && 
+                        (layout.PlotArea == PlotArea.LayoutInformation) && 
+                        (layout.CustomPrintScaleNumerator != 0d && layout.CustomPrintScaleDenominator != 0d)
+                    ) {
                         customScaleFactor = layout.CustomPrintScaleNumerator / layout.CustomPrintScaleDenominator;
                     }
                     bounds.Update((Point3D)(Vector3D)((Vector2D)plotAreaBounds.Min / customScaleFactor));
@@ -114,11 +142,7 @@ namespace SvgExportExample {
                     }
 
                     if (paperSize == null) {
-                        if (bounds.Delta.X > bounds.Delta.Y) {
-                            paperSize = PaperSizes.GetPaperSize(PaperKind.A4Rotated);
-                        } else {
-                            paperSize = PaperSizes.GetPaperSize(PaperKind.A4);
-                        }
+                        paperSize = GetPaperSize(bounds, options.PaperSpaceDefaultPaperKind, options.PaperSpaceDefaultOrientation);
                         margin = defaultMargin;
                     }
                 }
@@ -163,6 +187,31 @@ namespace SvgExportExample {
                     svgExporter.Draw(model, layout, null, config, to2DTransform, scaleFactor);
                 }
             }
+        }
+        private static string GetOutputFilename(SvgExportOptions options, string dir, string filenameNoExt) {
+            string outputFilename = options.OutputFilename;
+            if (string.IsNullOrEmpty(outputFilename)) {
+                outputFilename = Path.Combine(dir, filenameNoExt + ".svg");
+                options.OutputFilename = outputFilename;
+            }
+            return outputFilename;
+        }
+        private static PaperSize GetPaperSize(Bounds3D bounds, PaperKind paperKind, Orientation orientation) {
+            PaperSize paperSize = PaperSizes.GetPaperSize(paperKind);
+            if (orientation == Orientation.Auto) {
+                if (bounds.Delta.X > bounds.Delta.Y) {
+                    paperSize = new PaperSize($"{paperSize.PaperName}, rotated", paperSize.Height, paperSize.Width);
+                }
+            } else if (orientation == Orientation.Portrait) {
+                if (paperSize.Width > paperSize.Height) {
+                    paperSize = new PaperSize($"{paperSize.PaperName}", paperSize.Height, paperSize.Width);
+                }
+            } else if (orientation == Orientation.Landscape) {
+                if (paperSize.Width < paperSize.Height) {
+                    paperSize = new PaperSize($"{paperSize.PaperName}", paperSize.Height, paperSize.Width);
+                }
+            }
+            return paperSize;
         }
     }
 }
