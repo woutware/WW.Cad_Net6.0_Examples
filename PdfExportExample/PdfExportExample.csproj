@@ -16,6 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\MyWWLicense.cs" Link="MyWWLicense.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\MyAppKeyPair.snk" Link="MyAppKeyPair.snk" />
   </ItemGroup>
 

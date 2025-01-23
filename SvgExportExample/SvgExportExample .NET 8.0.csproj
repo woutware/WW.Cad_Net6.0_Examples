@@ -18,11 +18,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\MyWWLicense.cs" Link="MyWWLicense.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\MyAppKeyPair.snk" Link="MyAppKeyPair.snk" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WW.Cad_Net8.0" Version="8.0.2024.9111-trial" />
+    <PackageReference Include="WW.Cad_Net8.0" Version="8.0.2025.1231-trial" />
   </ItemGroup>
 
 </Project>
