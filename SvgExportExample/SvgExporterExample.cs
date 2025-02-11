@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+#if !MULTIPLATFORM
 using System.Drawing.Printing;
+#endif
 using System.IO;
 
 using WW.Cad.Base;
@@ -10,7 +12,7 @@ using WW.Cad.Model;
 using WW.Cad.Model.Entities;
 using WW.Cad.Model.Objects;
 using WW.Cad.Model.Tables;
-#if NETCOREAPP
+#if MULTIPLATFORM
 using WW.Drawing.Printing;
 #endif
 using WW.Math;
@@ -39,8 +41,6 @@ namespace WW.Cad.Examples {
             using (FileStream stream = File.Create(outputFilename)) {
                 WW.Cad.IO.SvgExporter svgExporter = new WW.Cad.IO.SvgExporter(stream);
 
-                GraphicsConfig config = (GraphicsConfig)GraphicsConfig.AcadLikeWithWhiteBackground.Clone();
-                config.DisplayLineTypeElementShapes = true;
                 // Shows use of some options.
                 DxfLayout layout = model.Header.ShowModelSpace ? model.ModelLayout : model.ActiveLayout;
                 if (!string.IsNullOrEmpty(options.LayoutName)) {
@@ -58,7 +58,7 @@ namespace WW.Cad.Examples {
                     layout = model.OrderedLayouts[options.LayoutIndex];
                 //config.TryDrawingTextAsText = true;
                 }
-                AddLayoutToSvgExporter(svgExporter, config, model, null, layout, options);
+                AddLayoutToSvgExporter(svgExporter, model, null, layout, options);
             }
         }
 
@@ -75,11 +75,7 @@ namespace WW.Cad.Examples {
             using (FileStream stream = File.Create(outputFilename)) {
                 WW.Cad.IO.SvgExporter svgExporter = new WW.Cad.IO.SvgExporter(stream);
 
-                GraphicsConfig config = (GraphicsConfig)GraphicsConfig.AcadLikeWithWhiteBackground.Clone();
-                config.DisplayLineTypeElementShapes = true;
-                //config.TryDrawingTextAsText = true;
-
-                AddLayoutToSvgExporter(svgExporter, config, model, null, layout, options);
+                AddLayoutToSvgExporter(svgExporter, model, null, layout, options);
             }
         }
 
@@ -87,7 +83,7 @@ namespace WW.Cad.Examples {
         // Optionally specify a modelView (for model space only).
         // Optionally specify a layout.
         private static void AddLayoutToSvgExporter(
-            WW.Cad.IO.SvgExporter svgExporter, GraphicsConfig config, DxfModel model, DxfView modelView, DxfLayout layout, SvgExportOptions options = null
+            WW.Cad.IO.SvgExporter svgExporter, DxfModel model, DxfView modelView, DxfLayout layout, SvgExportOptions options = null
         ) {
             if (options == null) {
                 options = SvgExportOptions.Default;
@@ -182,9 +178,9 @@ namespace WW.Cad.Examples {
                         );
                 }
                 if (layout == null || !layout.PaperSpace) {
-                    svgExporter.Draw(model, config, to2DTransform);
+                    svgExporter.Draw(model, options.GraphicsConfig, to2DTransform);
                 } else {
-                    svgExporter.Draw(model, layout, null, config, to2DTransform, scaleFactor);
+                    svgExporter.Draw(model, layout, null, options.GraphicsConfig, to2DTransform, scaleFactor);
                 }
             }
         }

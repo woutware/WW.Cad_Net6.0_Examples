@@ -11,10 +11,12 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath>..\..\SvgExportExample\bin\</OutputPath>
+    <DefineConstants>$(DefineConstants);MULTIPLATFORM</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>..\..\SvgExportExample\bin\</OutputPath>
+    <DefineConstants>$(DefineConstants);MULTIPLATFORM</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WW.Cad_Net8.0" Version="8.0.2025.1241-trial" />
+    <PackageReference Include="WW.Cad_Net8.0" Version="8.0.2025.2071-trial" />
   </ItemGroup>
 
 </Project>

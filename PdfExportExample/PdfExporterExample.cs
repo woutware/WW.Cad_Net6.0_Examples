@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+#if !MULTIPLATFORM
 using System.Drawing.Printing;
+#endif
 using System.IO;
 
 using WW.Cad.Base;
@@ -9,9 +11,7 @@ using WW.Cad.IO;
 using WW.Cad.Model;
 using WW.Cad.Model.Objects;
 using WW.Cad.Model.Tables;
-using WW.Drawing.Printing;
-
-#if NETCORE
+#if MULTIPLATFORM
 using WW.Drawing.Printing;
 #endif
 using WW.Math;
@@ -37,10 +37,8 @@ namespace WW.Cad.Examples {
                 PdfExporter pdfExporter = new PdfExporter(stream);
                 pdfExporter.EmbedFonts = true;
 
-                GraphicsConfig config = GetGraphicsConfig(options);
-
                 foreach (DxfLayout layout in model.OrderedLayouts) {
-                    AddLayoutToPdfExporter(pdfExporter, options, config, model, layout);
+                    AddLayoutToPdfExporter(pdfExporter, options, model, layout);
                 }
                 pdfExporter.EndDocument();
             }
@@ -56,9 +54,7 @@ namespace WW.Cad.Examples {
                 PdfExporter pdfExporter = new PdfExporter(stream);
                 pdfExporter.EmbedFonts = true;
 
-                GraphicsConfig config = GetGraphicsConfig(options);
-
-                AddLayoutToPdfExporter(pdfExporter, options, config, model, layout);
+                AddLayoutToPdfExporter(pdfExporter, options, model, layout);
 
                 pdfExporter.EndDocument();
             }
@@ -70,8 +66,7 @@ namespace WW.Cad.Examples {
         public static void AddLayoutToPdfExporter(
             PdfExporter pdfExporter,
             PlotOptions options,
-            GraphicsConfig config,
-            DxfModel model,
+            DxfModel model, 
             DxfLayout layout
         ) {
             Bounds3D bounds = null;
@@ -82,6 +77,7 @@ namespace WW.Cad.Examples {
             bool emptyLayout = false;
             Matrix4D modelTransform = Matrix4D.Identity;
             DxfVPort activeVPort = null;
+            var modelSpacePaperSize = options.ModelSpacePaperSize;
 
             if (options == null) {
                 options = PlotOptions.Default;
@@ -89,7 +85,6 @@ namespace WW.Cad.Examples {
             if (layout == null) {
                 layout = model.ModelLayout;
             }
-            var modelSpacePaperSize = options.ModelSpacePaperSize;
             if (!layout.PaperSpace) {
                 // Model space.
                 activeVPort = model.VPorts.GetActiveVPort();
@@ -127,14 +122,8 @@ namespace WW.Cad.Examples {
                             }
                             paperSize = modelSpacePaperSize;
                         } else {
-                            if (modelSpacePaperSize == null) {
-                                modelSpacePaperSize = PaperSizes.GetPaperSize(PaperKind.A4);
-                            }
-                            if (bounds.Delta.X > bounds.Delta.Y) {
                                 paperSize = modelSpacePaperSize;
-                            } else {
-                                paperSize = new PaperSize(modelSpacePaperSize.PaperName, modelSpacePaperSize.Height, modelSpacePaperSize.Width);
-                            }
+                            paperSize = EnsureHasPaperSizeAndRotateToMatchBounds(options, bounds, paperSize);
                         }
                     } else {
                         emptyLayout = true;
@@ -145,7 +134,11 @@ namespace WW.Cad.Examples {
                 useModelView = options.ModelView != null;
             } else {
                 if (layout.PlotPaperSize == Size2D.Zero) {
-                    layout.PlotPaperSize = new Size2D(297, 210); // A4 size in mm.
+                    const double hundredthInchToMM = 25.4d / 100d;
+                    layout.PlotPaperSize = new Size2D(
+                        options.PaperSizeFallback.Width * hundredthInchToMM,
+                        options.PaperSizeFallback.Height * hundredthInchToMM
+                    );
                 }
                 // Paper space layout.
                 Bounds2D plotAreaBounds = layout.GetPlotAreaBounds(options.GetPlotArea);
@@ -178,11 +171,7 @@ namespace WW.Cad.Examples {
                     }
 
                     if (paperSize == null) {
-                        if (bounds.Delta.X > bounds.Delta.Y) {
-                            paperSize = PaperSizes.GetPaperSize(PaperKind.A4Rotated);
-                        } else {
-                            paperSize = PaperSizes.GetPaperSize(PaperKind.A4);
-                        }
+                        paperSize = EnsureHasPaperSizeAndRotateToMatchBounds(options, bounds, paperSize);
                         margin = defaultMargin;
                     }
                 }
@@ -221,21 +210,25 @@ namespace WW.Cad.Examples {
                     ) * modelTransform;
                 }
                 if (layout == null || !layout.PaperSpace) {
-                    pdfExporter.DrawPage(model, config, to2DTransform, paperSize, ReportProgress);
+                    pdfExporter.DrawPage(model, options.GraphicsConfig, to2DTransform, paperSize, ReportProgress);
                 } else {
-                    pdfExporter.DrawPage(model, config, to2DTransform, scaleFactor, layout, null, paperSize, ReportProgress);
+                    pdfExporter.DrawPage(model, options.GraphicsConfig, to2DTransform, scaleFactor, layout, null, paperSize, ReportProgress);
                 }
             }
         }
 
-        private static GraphicsConfig GetGraphicsConfig(PlotOptions options) {
-            GraphicsConfig config = (GraphicsConfig)GraphicsConfig.WhiteBackgroundCorrectForBackColor.Clone();
-            config.DisplayLineTypeElementShapes = true;
-            config.TryDrawingTextAsText = true;
-            if (options != null) {
-                config.PlotStyleManager = options.PlotStyleProvider;
+        private static PaperSize EnsureHasPaperSizeAndRotateToMatchBounds(PlotOptions options, Bounds3D bounds, PaperSize paperSize) {
+            if (paperSize == null) {
+                paperSize = options.PaperSizeFallback;
             }
-            return config;
+            if (paperSize == null) {
+                paperSize = PaperSizes.GetPaperSize(PaperKind.A4);
+            }
+            if (bounds.Delta.X > bounds.Delta.Y != paperSize.Width > paperSize.Height) {
+                paperSize = new PaperSize(paperSize.PaperName, paperSize.Height, paperSize.Width);
+            }
+
+            return paperSize;
         }
 
         private static void ReportProgress(object sender, ProgressEventArgs e) {

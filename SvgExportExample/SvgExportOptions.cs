@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-
+#if !MULTIPLATFORM
 using System.Drawing.Printing;
+#endif
+
 using WW.Cad.Drawing;
+#if MULTIPLATFORM
 using WW.Drawing.Printing;
+#endif
 
 namespace WW.Cad.Examples {
     public class SvgExportOptions : PlotOptions {
