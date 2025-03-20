@@ -184,6 +184,7 @@ namespace WW.Cad.Examples {
                 }
             }
         }
+
         private static string GetOutputFilename(SvgExportOptions options, string dir, string filenameNoExt) {
             string outputFilename = options.OutputFilename;
             if (string.IsNullOrEmpty(outputFilename)) {
@@ -192,17 +193,18 @@ namespace WW.Cad.Examples {
             }
             return outputFilename;
         }
-        private static PaperSize GetPaperSize(Bounds3D bounds, PaperKind paperKind, Orientation orientation) {
+
+        private static PaperSize GetPaperSize(Bounds3D bounds, PaperKind paperKind, PlotOrientation orientation) {
             PaperSize paperSize = PaperSizes.GetPaperSize(paperKind);
-            if (orientation == Orientation.Auto) {
+            if (orientation == PlotOrientation.Auto) {
                 if (bounds.Delta.X > bounds.Delta.Y) {
                     paperSize = new PaperSize($"{paperSize.PaperName}, rotated", paperSize.Height, paperSize.Width);
                 }
-            } else if (orientation == Orientation.Portrait) {
+            } else if (orientation == PlotOrientation.Portrait) {
                 if (paperSize.Width > paperSize.Height) {
                     paperSize = new PaperSize($"{paperSize.PaperName}", paperSize.Height, paperSize.Width);
                 }
-            } else if (orientation == Orientation.Landscape) {
+            } else if (orientation == PlotOrientation.Landscape) {
                 if (paperSize.Width < paperSize.Height) {
                     paperSize = new PaperSize($"{paperSize.PaperName}", paperSize.Height, paperSize.Width);
                 }
