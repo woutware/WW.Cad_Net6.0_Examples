@@ -28,7 +28,7 @@ namespace WW.Cad.Examples {
             ExportToSvg(model, options);
         }
 
-        // Exports an AutoCAD file to SVG. For each layout a page in the SVG file is created.
+        // Exports the specified layout of an AutoCAD file to SVG.
         public static void ExportToSvg(DxfModel model, SvgExportOptions options = null) {
             if (options == null) {
                 options = SvgExportOptions.Default;
@@ -41,41 +41,7 @@ namespace WW.Cad.Examples {
             using (FileStream stream = File.Create(outputFilename)) {
                 WW.Cad.IO.SvgExporter svgExporter = new WW.Cad.IO.SvgExporter(stream);
 
-                // Shows use of some options.
-                DxfLayout layout = model.Header.ShowModelSpace ? model.ModelLayout : model.ActiveLayout;
-                if (!string.IsNullOrEmpty(options.LayoutName)) {
-                    if (string.Compare("modelspace", options.LayoutName, StringComparison.InvariantCultureIgnoreCase) == 0) {
-                        layout = model.ModelLayout;
-                    } else {
-                        if (!model.Layouts.TryGetValue(options.LayoutName, out layout)) {
-                            throw new ArgumentException($"Layout with name {options.LayoutName} not found.");
-                        }
-                    }
-                } else if (options.LayoutIndex >= 0) {
-                    if (options.LayoutIndex >= model.Layouts.Count) {
-                        throw new ArgumentOutOfRangeException($"Index {options.LayoutIndex} must be between 0 and number of layouts {model.Layouts.Count} - 1.");
-                }
-                    layout = model.OrderedLayouts[options.LayoutIndex];
-                //config.TryDrawingTextAsText = true;
-                }
-                AddLayoutToSvgExporter(svgExporter, model, null, layout, options);
-            }
-        }
-
-        // Exports the specified layout of an AutoCAD file to SVG.
-        public static void ExportToSvg(DxfModel model, DxfLayout layout, SvgExportOptions options = null) {
-            if (options == null) {
-                options = SvgExportOptions.Default;
-            }
-            string filename = Path.GetFileName(model.Filename);
-            string dir = Path.GetDirectoryName(model.Filename);
-            string filenameNoExt = Path.GetFileNameWithoutExtension(filename);
-            // as SVG
-            string outputFilename = GetOutputFilename(options, dir, filenameNoExt);
-            using (FileStream stream = File.Create(outputFilename)) {
-                WW.Cad.IO.SvgExporter svgExporter = new WW.Cad.IO.SvgExporter(stream);
-
-                AddLayoutToSvgExporter(svgExporter, model, null, layout, options);
+                AddLayoutToSvgExporter(svgExporter, model, null, options);
             }
         }
 
@@ -83,7 +49,7 @@ namespace WW.Cad.Examples {
         // Optionally specify a modelView (for model space only).
         // Optionally specify a layout.
         private static void AddLayoutToSvgExporter(
-            WW.Cad.IO.SvgExporter svgExporter, DxfModel model, DxfView modelView, DxfLayout layout, SvgExportOptions options = null
+            WW.Cad.IO.SvgExporter svgExporter, DxfModel model, DxfView modelView, SvgExportOptions options = null
         ) {
             if (options == null) {
                 options = SvgExportOptions.Default;
@@ -94,7 +60,13 @@ namespace WW.Cad.Examples {
             PaperSize paperSize = null;
             bool useModelView = false;
             bool emptyLayout = false;
-            if (layout == null || !layout.PaperSpace) {
+            DxfLayout layout;
+            if (options.Layout != null) {
+                layout = options.Layout;
+            } else {
+                layout = model.Header.ShowModelSpace ? model.ModelLayout : model.ActiveLayout;
+            }
+            if (!layout.PaperSpace) {
                 // Model space.
                 BoundsCalculator boundsCalculator = new BoundsCalculator();
                 boundsCalculator.GetBounds(model);
@@ -114,8 +86,8 @@ namespace WW.Cad.Examples {
                 if (plotAreaBounds.Initialized) {
                     double customScaleFactor = 1d;
                     if (
-                        (layout.PlotLayoutFlags & PlotLayoutFlags.UseStandardScale) == 0 && 
-                        (layout.PlotArea == PlotArea.LayoutInformation) && 
+                        (layout.PlotLayoutFlags & PlotLayoutFlags.UseStandardScale) == 0 &&
+                        (layout.PlotArea == PlotArea.LayoutInformation) &&
                         (layout.CustomPrintScaleNumerator != 0d && layout.CustomPrintScaleDenominator != 0d)
                     ) {
                         customScaleFactor = layout.CustomPrintScaleNumerator / layout.CustomPrintScaleDenominator;
